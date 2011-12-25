@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="description" content="CVStash - Free Résumé Builder - Created by Arbie Samong" />
+        <meta name="keywords" content="résumé builder, résumé templates, free résumé builder, free résumé" />
+
+        <title>Free Résumé Builder | Advocate yourself | CVStash</title>
+        <link rel="stylesheet" type="text/css" href="/static/css/clickr/style.css">
+        <link rel="stylesheet" type="text/css" href="/static/css/isotope.css">
+        <link rel="stylesheet" type="text/css" href="/static/css/clickr/search-default.css">
+        <link rel="stylesheet" type="text/css" href="/static/css/dock.css">
+        <!--[if IE]>
+            <style type="text/css">
+                #pager { padding-left: 20px }
+                #pager li { float:left }
+            </style>
+        <![endif]-->
+        <script type="text/javascript" src="/static/js/clickr/jquery-1.4.4.min.js"></script>
+        <script type="text/javascript" src="/static/js/clickr/jquery.cycle.all.min.js"></script>
+        <script type="text/javascript" src="/static/js/clickr/jquery.easing.min.js"></script>
+        <script type="text/javascript" src="/static/js/clickr/cufon-yui.js"></script>
+        <script type="text/javascript" src="/static/js/clickr/PT_Sans.font.js"></script>
+        <script type="text/javascript" src="/static/js/clickr/custom.min.js"></script>
+        <script type="text/javascript">
+			    Cufon.replace('h2');
+        </script>
+        <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+        <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+        <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+<script src="http://www.google.com/jsapi" type="text/javascript"></script>
+<script type="text/javascript">
+  google.load('search', '1', {language : 'en'});
+  google.setOnLoadCallback(function() {
+    var customSearchControl = new google.search.CustomSearchControl('009118122101183652757:tokapjg57g4');
+    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+    var options = new google.search.DrawOptions();
+    options.enableSearchboxOnly("http://www.google.com/cse?cx=009118122101183652757:tokapjg57g4", null, true);
+    customSearchControl.draw('cse-search-form', options);
+  }, true);
+</script>
+<link rel="stylesheet" href="http://www.google.com/cse/style/look/default.css" type="text/css" />
+        <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+        <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+        {{include 'web2py_ajax.html'}}
+
+        <!-- bit client -->
+        <script type="text/javascript" src="http://api.bitp.it/bitp.it.js"></script>
+        <script type="text/javascript">
+          bitpit({clientId: "98"});
+        </script>
+
+        <!-- google analytics -->
+        <script type="text/javascript">
+          var _gaq = _gaq || [];
+          _gaq.push(['_setAccount', 'UA-23484172-1']);
+          _gaq.push(['_trackPageview']);
+          (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+          })();
+        </script>
+
+        <!-- share this -->
+        <script type="text/javascript">var switchTo5x=true;</script>
+        <script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+        <script type="text/javascript">stLight.options({publisher:'4d8bed4d-083e-4598-9c2b-af6c0d88c470'});</script>
+
+        <!-- google plus -->
+        <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+    </head>
+    <body>
+    <a href="https://github.com/phektus/cvstash">
+      <img style="position: absolute; top: 0; right: 0; border: 0; z-index: 5;"
+        src="/static/images/clickr/gitfork.png"
+        alt="Fork me on GitHub">
+    </a>
+    <div class="header">
+    </div><!-- .header -->
+    <div class="featured">
+      <div class="flash">{{=response.flash or ''}}</div>
+      {{include}}
+    </div><!-- .featured -->
+    <div class="primary">
+        <div class="half notes">
+            <div id="cse-search-form" style="width: 100%;">Loading</div>
+            <div id="copyright">
+              Copyright &copy; 2011 <a href="/">CVStash</a> by <a href="http://www.cvstash.com/profile/arbie_samong_mfvvK163U">Arbie Samong</a> All Rights Reserved
+            </div>
+        </div><!-- .notes -->
+        <div class="half brand last">
+            <div id="logo">
+			        <a href="/">CVStash</a>
+			        <p>Resumes made easy</p>
+		        </div>
+		        <div id="affiliates">
+		          <span><a href="http://www.twitter.com/cvstash"><img src="http://twitter-badges.s3.amazonaws.com/follow_me-c.png" alt="Follow cvstash on Twitter" width="150px" /></a></span>
+		          <span><g:plusone></g:plusone></span>
+		        </div>
+        </div><!-- .brand -->
+    </div><!-- .primary -->
+
+    {{if latest_users:}}
+      <div class="dock">
+		    <ul>
+		      {{for latest_user in latest_users:}}
+			      <li>
+				      <a href="http://www.cvstash.com/profile/{{=latest_user.resumeurl}}">
+					      <em><span>{{=latest_user.first_name}} {{=latest_user.last_name}} {{if latest_user.title:}}, {{=latest_user.title}} {{pass}}</span></em>
+					      <img src="{{=Gravatar(latest_user.email, default='http://www.cvstash.com/static/images/avatar-default.jpg').thumb}}'>" alt="Mail" />
+					      <p>{{=latest_user.first_name}}</p>
+				      </a>
+			      </li>
+          {{pass}}
+        </ul>
+      </div>
+    {{pass}}
+
+
+    </body>
+</html>

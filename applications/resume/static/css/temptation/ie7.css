@@ -1,0 +1,13 @@
+
+.clear {
+	height: 0px !important;
+}
+
+#submit {
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
+ul#navigation li a {
+	font-size: 34px;
+}

@@ -1,7 +1,7 @@
 {{extend 'templates/clickr.html'}}
     <div class="half">
       <h2>Create your online RESUME quickly and easily for FREE.</h2>
-      <p>The web is fast transforming the way we look for jobs. Join hundreds of professionals who created their online résumés and getting the word out about what they can do. It's simple, easy and most of all <b>FREE</b>. {{ if stats and stats.profile_count: }} Currently serving <b>{{= stats.profile_count }}</b> profiles.{{ pass }}</p>
+      <p>The web is fast transforming the way we look for jobs. Join hundreds of professionals who created their online résumés and getting the word out about what they can do. It's simple, easy and most of all <b>FREE</b>. </p>
       <p>{{=A('JOIN NOW', _href=URL('user/login'), _class="button")}} &nbsp;&nbsp;absolutely <b>FREE</b></p>
       <p class="tiny">See a <b><a href="http://www.cvstash.com/profile/john_doe_EUQ8q3gDV">SAMPLE RESUME</a></b> for a preview, or <b>{{=A('LOG IN', _href=URL('user/login'))}}</b> if you already have an account. Sign up, create and then distribute within minutes.</p>
     </div><!-- .half -->

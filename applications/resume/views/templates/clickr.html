@@ -103,15 +103,15 @@
 
     {{if latest_users:}}
       <div class="dock">
-		    <ul>
-		      {{for latest_user in latest_users:}}
-			      <li>
-				      <a href="http://www.cvstash.com/profile/{{=latest_user.resumeurl}}">
-					      <em><span>{{=latest_user.first_name}} {{=latest_user.last_name}} {{if latest_user.title:}}, {{=latest_user.title}} {{pass}}</span></em>
-					      <img src="{{=Gravatar(latest_user.email, default='http://www.cvstash.com/static/images/avatar-default.jpg').thumb}}'>" alt="Mail" />
-					      <p>{{=latest_user.first_name}}</p>
-				      </a>
-			      </li>
+        <ul>
+          {{for latest_user in latest_users:}}
+              <li>
+                  <a href="http://www.cvstash.com/profile/{{=latest_user.resumeurl}}">
+                      <em><span>{{=latest_user.first_name}} {{=latest_user.last_name}} {{if latest_user.title:}}, {{=latest_user.title}} {{pass}}</span></em>
+                      <img src="{{=Gravatar(latest_user.email, default='http://www.cvstash.com/static/images/avatar-default.jpg').thumb}}'>" alt="Mail" />
+                      <p>{{=latest_user.first_name}}</p>
+                  </a>
+              </li>
           {{pass}}
         </ul>
       </div>

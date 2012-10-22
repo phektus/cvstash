@@ -1,7 +1,1 @@
 cron:
-- description: daily random users job
-  url: /resume/tasks/build_landingpage_users
-  schedule: every 48 hours
-- description: daily profile count job
-  url: /resume/tasks/build_landingpage_stats
-  schedule: every 24 hours

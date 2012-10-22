@@ -168,6 +168,7 @@ class Response(Storage):
         self.menu = []             # used by the default view layout
         self.files = []            # used by web2py_ajax.html
         self.generic_patterns = [] # patterns to allow generic views
+        self.delimiters = ('{{','}}')
         self._vars = None
         self._caller = lambda f: f()
         self._view_environment = None
@@ -233,12 +234,15 @@ class Response(Storage):
             # cache for 5 minutes by default
             cache = self.cache_includes or (current.cache.ram, 60*5)
             def call_minify():
-                return minify.minify(files,URL('static','temp'),
+                return minify.minify(files,
+                                     URL('static','temp'),
                                      current.request.folder,
-                                     self.optimize_css,self.optimize_js)
+                                     self.optimize_css,
+                                     self.optimize_js)
             if cache:
                 cache_model, time_expire = cache
-                files = cache_model('response.files.minified',call_minify,
+                files = cache_model('response.files.minified',
+                                    call_minify,
                                     time_expire)
             else:
                 files = call_minify()
@@ -433,8 +437,7 @@ class Session(Storage):
                     response.session_file = \
                         open(response.session_filename, 'rb+')
                     try:
-                        portalocker.lock(response.session_file,
-                                portalocker.LOCK_EX)
+                        portalocker.lock(response.session_file,portalocker.LOCK_EX)
                         response.session_locked = True
                         self.update(cPickle.load(response.session_file))
                         response.session_file.seek(0)
@@ -548,7 +551,7 @@ class Session(Storage):
 
         (record_id_name, table, record_id, unique_key) = \
             response._dbtable_and_field
-        dd = dict(locked=False, client_ip=request.env.remote_addr,
+        dd = dict(locked=False, client_ip=request.client.replace(':','.'),
                   modified_datetime=request.now,
                   session_data=cPickle.dumps(dict(self)),
                   unique_key=unique_key)

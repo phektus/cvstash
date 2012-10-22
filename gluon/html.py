@@ -124,6 +124,12 @@ def xmlescape(data, quote = True):
     return data
 
 
+def truncate_string(text, length, dots='...'):
+    text = text.decode('utf-8')
+    if len(text)>length:
+        text = text[:length-len(dots)].encode('utf-8')+dots
+    return text
+
 def URL(
     a=None,
     c=None,
@@ -142,6 +148,7 @@ def URL(
     host=None,
     port=None,
     encode_embedded_slash=False,
+    url_encode=True
     ):
     """
     generate a URL
@@ -172,6 +179,24 @@ def URL(
 
         >>> str(URL(a='a', c='c', f='f', args=['w/x', 'y/z'], encode_embedded_slash=True))
         '/a/c/f/w%2Fx/y%2Fz'
+
+        >>> str(URL(a='a', c='c', f='f', args=['%(id)d'], url_encode=False))
+        '/a/c/f/%(id)d'
+
+        >>> str(URL(a='a', c='c', f='f', args=['%(id)d'], url_encode=True))
+        '/a/c/f/%25%28id%29d'
+
+        >>> str(URL(a='a', c='c', f='f', vars={'id' : '%(id)d' }, url_encode=False))
+        '/a/c/f?id=%(id)d'
+
+        >>> str(URL(a='a', c='c', f='f', vars={'id' : '%(id)d' }, url_encode=True))
+        '/a/c/f?id=%25%28id%29d'
+        
+        >>> str(URL(a='a', c='c', f='f', anchor='%(id)d', url_encode=False))
+        '/a/c/f#%(id)d'
+
+        >>> str(URL(a='a', c='c', f='f', anchor='%(id)d', url_encode=True))
+        '/a/c/f#%25%28id%29d'
 
     generates a url '/a/c/f' corresponding to application a, controller c
     and function f. If r=request is passed, a, c, f are set, respectively,
@@ -208,6 +233,9 @@ def URL(
     controller = None
     function = None
 
+    if not isinstance(args, (list, tuple)):
+        args = [args]
+
     if not r:
         if a and not c and not f: (f,a,c)=(a,c,f)
         elif a and c and not f: (c,f,a)=(a,c,f)
@@ -231,24 +259,28 @@ def URL(
                 function = f.__name__
             else:
                 raise SyntaxError, 'when calling URL, function or function name required'
-        elif '.' in f:
-            function, extension = f.split('.', 1)
+        elif '/' in f:
+            items = f.split('/')
+            function = f = items[0]
+            args = items[1:] + args
         else:
             function = f
+        if '.' in function:
+            function, extension = function.split('.', 1)
 
     function2 = '%s.%s' % (function,extension or 'html')
 
     if not (application and controller and function):
         raise SyntaxError, 'not enough information to build the url'
 
-    if not isinstance(args, (list, tuple)):
-        args = [args]
-
     if args:
-        if encode_embedded_slash:
-            other = '/' + '/'.join([urllib.quote(str(x), '') for x in args])
+        if url_encode:
+            if encode_embedded_slash:
+                other = '/' + '/'.join([urllib.quote(str(x), '') for x in args])
+            else:
+                other = args and urllib.quote('/' + '/'.join([str(x) for x in args]))
         else:
-            other = args and urllib.quote('/' + '/'.join([str(x) for x in args]))
+            other = args and ('/' + '/'.join([str(x) for x in args]))
     else:
         other = ''
 
@@ -292,9 +324,15 @@ def URL(
         list_vars.append(('_signature', sig))
 
     if list_vars:
-        other += '?%s' % urllib.urlencode(list_vars)
+        if url_encode:
+            other += '?%s' % urllib.urlencode(list_vars)
+        else:
+            other += '?%s' % '&'.join([var[0]+'='+var[1] for var in list_vars])
     if anchor:
-        other += '#' + urllib.quote(str(anchor))
+        if url_encode:
+            other += '#' + urllib.quote(str(anchor))
+        else:
+            other += '#' + (str(anchor))
     if extension:
         function += '.' + extension
 
@@ -1379,6 +1417,7 @@ class CODE(DIV):
         link = self['link']
         counter = self.attributes.get('counter', 1)
         highlight_line = self.attributes.get('highlight_line', None)
+        context_lines = self.attributes.get('context_lines', None) 
         styles = self['styles'] or {}
         return highlight(
             join(self.components),
@@ -1388,6 +1427,7 @@ class CODE(DIV):
             styles=styles,
             attributes=self.attributes,
             highlight_line=highlight_line,
+            context_lines=context_lines,
             )
 
 
@@ -1583,7 +1623,9 @@ class INPUT(DIV):
             _value = None
         else:
             _value = str(self['_value'])
-        if t == 'checkbox' and not '_checked' in self.attributes:
+        if '_checked' in self.attributes and not 'value' in self.attributes:
+            pass
+        elif t == 'checkbox':
             if not _value:
                 _value = self['_value'] = 'on'
             if not value:
@@ -1593,7 +1635,7 @@ class INPUT(DIV):
             elif not isinstance(value,(list,tuple)):
                 value = str(value).split('|')
             self['_checked'] = _value in value and 'checked' or None
-        elif t == 'radio' and not '_checked' in self.attributes:
+        elif t == 'radio':
             if str(value) == str(_value):
                 self['_checked'] = 'checked'
             else:
@@ -1609,6 +1651,7 @@ class INPUT(DIV):
         if name and hasattr(self, 'errors') \
                 and self.errors.get(name, None) \
                 and self['hideerror'] != True:
+            self['_class'] = (self['_class'] and self['_class']+' ' or '')+'invalidinput'
             return DIV.xml(self) + DIV(self.errors[name], _class='error',
                 errors=None, _id='%s__error' % name).xml()
         else:
@@ -2081,7 +2124,8 @@ class MENU(DIV):
                     li['_class'] = li['_class']+' '+self['li_active']
                 else:
                     li['_class'] = self['li_active']
-            ul.append(li)
+            if len(item) <= 4 or item[4] == True:
+                ul.append(li)
         return ul
 
     def serialize_mobile(self, data, select=None, prefix=''):

@@ -156,6 +156,10 @@ class Storage(dict):
             return value[-1]
         return None
 
+PICKABLE = (str,int,long,float,bool,list,dict,tuple,set)
+def PickleableStorage(data):
+    return Storage(dict((k,v) for (k,v) in data.items() if isinstance(v,PICKABLE)))
+
 class StorageList(Storage):
     """
     like Storage but missing elements default to [] instead of None
@@ -168,25 +172,22 @@ class StorageList(Storage):
             return self[key]
 
 def load_storage(filename):
-    fp = open(filename, 'rb')
+    fp = None
     try:
-        portalocker.lock(fp, portalocker.LOCK_EX)
+        fp = portalocker.LockedFile(filename, 'rb')
         storage = cPickle.load(fp)
-        portalocker.unlock(fp)
     finally:
-        fp.close()
+        if fp: fp.close()
     return Storage(storage)
 
 
 def save_storage(storage, filename):
-    fp = open(filename, 'wb')
+    fp = None
     try:
-        portalocker.lock(fp, portalocker.LOCK_EX)
+        fp = portalocker.LockedFile(filename, 'wb')
         cPickle.dump(dict(storage), fp)
-        portalocker.unlock(fp)
     finally:
-        fp.close()
-
+        if fp: fp.close()
 
 class Settings(Storage):
 

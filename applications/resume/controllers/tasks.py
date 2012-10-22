@@ -1,4 +1,5 @@
 import random
+import string
 
 def build_landingpage_users():
     # clean up the table
@@ -24,3 +25,12 @@ def build_landingpage_stats():
     db(db.landing_page_stats.id>0).delete()
     profile_count = db(db.userprofile.id > 0).count()
     db.landing_page_stats.insert(profile_count=profile_count)
+
+def clean_resume_urls():
+    MAX_USERS = 100
+    users = db(db.auth_user.id>0).select().sort(lambda row: random.random())[0:MAX_USERS]
+    for user in users:
+        settings = db(db.usersettings.owner==user.id).select().first()
+        if '_' in settings.resumeurl:
+            resumeurl = ''.join(random.choice(string.letters+'1234567890') for i in xrange(20))
+            settings.update_record(resumeurl=resumeurl)

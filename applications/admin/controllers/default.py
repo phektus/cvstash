@@ -1061,7 +1061,10 @@ def errors():
     app = get_app()
 
     method = request.args(1) or 'new'
-
+    db_ready = {}
+    db_ready['status'] = get_ticket_storage(app)
+    db_ready['errmessage'] = "No ticket_storage.txt found under /private folder"
+    db_ready['errlink'] = "http://web2py.com/books/default/chapter/29/13#Collecting-tickets"
 
     if method == 'new':
         errors_path = apath('%s/errors' % app, r=request)
@@ -1104,7 +1107,7 @@ def errors():
         decorated = [(x['count'], x) for x in hash2error.values()]
         decorated.sort(key=operator.itemgetter(0), reverse=True)
 
-        return dict(errors = [x[1] for x in decorated], app=app, method=method)
+        return dict(errors = [x[1] for x in decorated], app=app, method=method, db_ready=db_ready)
 
     elif method == 'dbnew':
         errors_path = apath('%s/errors' % app, r=request)
@@ -1169,18 +1172,19 @@ def errors():
                          key=func,
                          reverse=True)
 
-        return dict(app=app, tickets=tickets, method=method)
+        return dict(app=app, tickets=tickets, method=method, db_ready=db_ready)
 
 def get_ticket_storage(app):
     private_folder = apath('%s/private' % app, r=request)
-    try:
-        db_string = open(os.path.join(private_folder, 'ticket_storage.txt')).read().replace('\r','').replace('\n','').strip()
-    except IOError:
-        raise Exception, "No ticket_storage.txt found in /private folder"
+    ticket_file = os.path.join(private_folder, 'ticket_storage.txt')
+    if os.path.exists(ticket_file):
+        db_string = open(ticket_file).read()
+        db_string = db_string.strip().replace('\r','').replace('\n','')
+    else:
+        return False
     tickets_table = 'web2py_ticket'
     tablename = tickets_table + '_' + app
     db_path = apath('%s/databases' % app, r=request)
-    from gluon import DAL
     ticketsdb = DAL(db_string, folder=db_path, auto_import=True)
     if not ticketsdb.get(tablename):
         table = ticketsdb.define_table(
@@ -1308,6 +1312,7 @@ def update_languages():
     session.flash = T('Language files (static strings) updated')
     redirect(URL('design',args=app,anchor='languages'))
 
+
 def twitter():
     session.forget()
     session._unlock(response)
@@ -1315,12 +1320,18 @@ def twitter():
     import gluon.contrib.simplejson as sj
     try:
         if TWITTER_HASH:
-            page = gluon.tools.fetch('http://twitter.com/%s?format=json'%TWITTER_HASH)
-            return sj.loads(page)['#timeline']
+            page = urllib.urlopen("http://search.twitter.com/search.json?q=%%40%s" % TWITTER_HASH).read()
+            data = sj.loads(page  , encoding="utf-8")['results']
+            d = dict()
+            for e in data:
+                d[e["id"]] = e
+            r = reversed(sorted(d))
+            return dict(tweets = [d[k] for k in r])
         else:
             return 'disabled'
     except Exception, e:
         return DIV(T('Unable to download because:'),BR(),str(e))
+
 
 def user():
     if MULTI_USER_MODE:

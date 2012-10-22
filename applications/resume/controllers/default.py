@@ -10,14 +10,11 @@ def __getUserSettings(user):
     settings = db(db.usersettings.owner==user.id).select().first()
     if not settings:
         # create user settings
-        first_name = user.first_name.lower()
-        last_name = user.last_name.lower()
-        seed = ''.join(random.choice(string.letters+'1234567890') for i in xrange(9))
-        resumeurl = '%s_%s_%s' % (first_name, last_name, seed)
-        resumeurl = resumeurl.replace('  ',' ')
-        resumeurl = resumeurl.replace('  ',' ')
-        resumeurl = resumeurl.replace(' ','_')
+        resumeurl = ''.join(random.choice(string.letters+'1234567890') for i in xrange(20))
         settings = db.usersettings.insert(owner=user.id, activetemplate=DEFAULT_TEMPLATE, resumeurl=resumeurl)
+    if '_' in settings.resumeurl:
+        resumeurl = ''.join(random.choice(string.letters+'1234567890') for i in xrange(20))
+        settings.update_record(resumeurl=resumeurl)
 
     return settings
 

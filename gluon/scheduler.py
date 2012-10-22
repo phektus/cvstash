@@ -160,7 +160,9 @@ def executor(queue,task):
             result = dumps(_function(*args,**vars))
         else:
             ### for testing purpose only
-            result = eval(task.function)(*loads(task.args, list_hook),**loads(task.vars, object_hook=_decode_dict))
+            result = eval(task.function)(
+                *loads(task.args, object_hook=_decode_dict),
+                 **loads(task.vars, object_hook=_decode_dict))
         stdout, sys.stdout = sys.stdout, stdout
         queue.put(TaskReport(COMPLETED, result,stdout.getvalue()))
     except BaseException,e:
@@ -373,6 +375,7 @@ class Scheduler(MetaScheduler):
                 (ts.stop_time>now)\
                 (ts.next_run_time<=now)\
                 (ts.enabled==True)\
+                (ts.group_name.belongs(self.group_names))\
                 (ts.assigned_worker_name.belongs((None,'',self.worker_name))) #None?
             number_grabbed = all_available.update(
                 assigned_worker_name=self.worker_name,status=ASSIGNED)

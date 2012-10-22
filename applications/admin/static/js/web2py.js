@@ -18,15 +18,11 @@ function ajax(u,s,t) {
         }
         if (pcs.length>0){query = pcs.join("&");}
     }
-    jQuery.ajax({type: "POST", url: u, data: query, success: function(msg) { if(t) { if(t==':eval') eval(msg); else jQuery("#" + t).html(msg); } } });
+    jQuery.ajax({type: "POST", url: u, data: query, success: function(msg) { if(t) { if(t==':eval') eval(msg); else if(typeof t=='string') jQuery("#"+t).html(msg); else t(msg); } } });
 }
 
 String.prototype.reverse = function () { return this.split('').reverse().join('');};
 function web2py_ajax_fields(target) {
-  jQuery('input.integer', target).keyup(function(){this.value=this.value.reverse().replace(/[^0-9\-]|\-(?=.)/g,'').reverse();});
-  jQuery('input.double,input.decimal', target).keyup(function(){this.value=this.value.reverse().replace(/[^0-9\-\.,]|[\-](?=.)|[\.,](?=[0-9]*[\.,])/g,'').reverse();});
-  var confirm_message = (typeof w2p_ajax_confirm_message != 'undefined') ? w2p_ajax_confirm_message : "Are you sure you want to delete this object?";
-  jQuery("input[type='checkbox'].delete", target).live('click',function(){ if(this.checked) if(!confirm(confirm_message)) this.checked=false; });
   var date_format = (typeof w2p_ajax_date_format != 'undefined') ? w2p_ajax_date_format : "%Y-%m-%d";
   var datetime_format = (typeof w2p_ajax_datetime_format != 'undefined') ? w2p_ajax_datetime_format : "%Y-%m-%d %H:%M:%S";
   jQuery("input.date",target).each(function() {Calendar.setup({inputField:this, ifFormat:date_format, showsTime:false });});
@@ -38,9 +34,16 @@ function web2py_ajax_fields(target) {
 function web2py_ajax_init(target) {
   jQuery('.hidden', target).hide();
   jQuery('.error', target).hide().slideDown('slow');
-  jQuery('.flash', target).click(function(e) { jQuery(this).fadeOut('slow'); e.preventDefault(); });
-  // jQuery('input[type=submit]').click(function(){var t=jQuery(this);t.hide();t.after('<input class="submit_disabled" disabled="disabled" type="submit" name="'+t.attr("name")+'_dummy" value="'+t.val()+'">')});
   web2py_ajax_fields(target);
+};
+
+function web2py_event_handlers() {
+  var doc = jQuery(document)
+  doc.on('click', '.flash', function(e){jQuery(this).fadeOut('slow'); e.preventDefault();});
+  doc.on('keyup', 'input.integer', function(){this.value=this.value.reverse().replace(/[^0-9\-]|\-(?=.)/g,'').reverse();});
+  doc.on('keyup', 'input.double, input.decimal', function(){this.value=this.value.reverse().replace(/[^0-9\-\.,]|[\-](?=.)|[\.,](?=[0-9]*[\.,])/g,'').reverse();});
+  var confirm_message = (typeof w2p_ajax_confirm_message != 'undefined') ? w2p_ajax_confirm_message : "Are you sure you want to delete this object?";
+  doc.on('click', "input[type='checkbox'].delete", function(){if(this.checked) if(!confirm(confirm_message)) this.checked=false;});
 };
 
 jQuery(function() {
@@ -48,7 +51,9 @@ jQuery(function() {
    flash.hide();
    if(flash.html()) flash.slideDown();
    web2py_ajax_init(document);
+   web2py_event_handlers();
 });
+
 function web2py_trap_form(action,target) {
    jQuery('#'+target+' form').each(function(i){
       var form=jQuery(this);
@@ -60,6 +65,7 @@ function web2py_trap_form(action,target) {
       });
    });
 }
+
 function web2py_trap_link(target) {
     jQuery('#'+target+' a.w2p_trap').each(function(i){
 	    var link=jQuery(this);
@@ -70,11 +76,12 @@ function web2py_trap_link(target) {
 		});
 	});
 }
-function web2py_ajax_page(method,action,data,target) {
-  jQuery.ajax({'type':method,'url':action,'data':data,
+
+function web2py_ajax_page(method, action, data, target) {
+  jQuery.ajax({'type':method, 'url':action, 'data':data,
     'beforeSend':function(xhr) {
-      xhr.setRequestHeader('web2py-component-location',document.location);
-      xhr.setRequestHeader('web2py-component-element',target);},
+      xhr.setRequestHeader('web2py-component-location', document.location);
+      xhr.setRequestHeader('web2py-component-element', target);},
     'complete':function(xhr,text){
       var html=xhr.responseText;
       var content=xhr.getResponseHeader('web2py-component-content');
@@ -87,14 +94,60 @@ function web2py_ajax_page(method,action,data,target) {
       web2py_trap_form(action,target);
       web2py_trap_link(target);
       web2py_ajax_init('#'+target);
-      if(command) eval(command);
-      if(flash) jQuery('.flash').html(flash).slideDown();
+      if(command)
+        eval(decodeURIComponent(escape(command)));
+      if(flash)
+        jQuery('.flash').html(decodeURIComponent(escape(flash))).slideDown();
       }
     });
 }
-function web2py_component(action,target) {
-  jQuery(function(){ web2py_ajax_page('get',action,null,target); });
-}
+
+function web2py_component(action, target, timeout, times){
+  jQuery(function(){
+    var element = $("#" + target).get(0);
+    var statement = "$('#" + target + "').get(0).reload();";
+    element.reload = function (){
+        // Continue if times is Infinity or
+        // the times limit is not reached
+        if (this.reload_check()){
+            web2py_ajax_page('get', action, null, target);} }; // reload
+    // Method to check timing limit
+    element.reload_check = function (){
+        if (this.reload_counter == Infinity){return true;}
+        else {
+            if (!isNaN(this.reload_counter)){
+                this.reload_counter -= 1;
+                if (this.reload_counter < 0){
+                    if (!this.run_once){
+                        clearInterval(this.timing);
+                        return false;
+                    }
+                }
+                else{return true;}
+            } }
+            return false;}; // reload check
+    if (!isNaN(timeout)){
+        element.timeout = timeout;
+        element.reload_counter = times;
+        if (times > 1){
+        // Multiple or infinite reload
+        // Run first iteration
+        web2py_ajax_page('get', action, null, target);
+        element.run_once = false;
+        element.timing = setInterval(statement, timeout);
+        element.reload_counter -= 1;
+        }
+        else if (times == 1) {
+        // Run once with timeout
+        element.run_once = true;
+        element.setTimeout = setTimeout;
+        element.timing = setTimeout(statement, timeout);
+        }
+    } else {
+        // run once (no timeout specified)
+        web2py_ajax_page('get', action, null, target);
+    } }); }
+
 function web2py_comet(url,onmessage,onopen,onclose) {
   if ("WebSocket" in window) {
     var ws = new WebSocket(url);

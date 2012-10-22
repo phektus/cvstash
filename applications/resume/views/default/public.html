@@ -5,7 +5,7 @@
 	<title>{{=response.title}}</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
-	<meta name="description" content="{{=userprofile.first_name}} {{=userprofile.last_name}} Resume by CVStash - Free Resume Builder" />
+	<meta name="description" content="{{=userprofile.first_name or ''}} {{=userprofile.last_name or ''}} Resume by CVStash - Free Resume Builder" />
 	<meta name="keywords" content="{{=userprofile.first_name}} {{=userprofile.last_name}}, {{=userprofile.first_name}} {{=userprofile.last_name}} resume, resume builder, free resume builder" />
 
 	<!-- //////// Favicon ////////  -->
